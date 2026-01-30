@@ -1,4 +1,5 @@
-// un reducer es una funcion pura que resuelve un nuevo estado basado en el estado actual y una accion
+import * as z from "zod";
+
 interface Todo {
     id: number
     text: string
@@ -16,6 +17,45 @@ export type TaskAction =
 | {type: 'ADD_TODO', payload: string}
 | {type: 'TOGGLE_TODO', payload: number}
 | {type: 'DELETE_TODO', payload: number}
+
+const TodoSchema = z.object({
+    id: z.number(),
+    text: z.string(),
+    completed: z.boolean(),
+})
+
+const TaskStateSchema = z.object({
+    todos: z.array(TodoSchema),
+    length: z.number(),
+    pending: z.number(),
+    completed: z.number(),
+})
+
+export const getTasksInitialState = (): TaskState => {
+    const tasksState = localStorage.getItem('tasks')
+    if(!tasksState) {
+            return {
+            todos: [],
+            length: 0,
+            pending: 0,
+            completed: 0,
+        }
+    }
+
+    //validar mediante zod
+    const result = TaskStateSchema.safeParse(JSON.parse(tasksState))
+    if(result.error) {
+        console.log(result.error)
+        return {
+            todos: [],
+            length: 0,
+            pending: 0,
+            completed: 0,
+        }
+    }
+    return result.data
+    // return JSON.parse(tasksState)
+}
 
 export const tasksReducer = (state: TaskState, action: TaskAction):TaskState => {
 
